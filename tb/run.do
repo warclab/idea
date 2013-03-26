@@ -6,7 +6,8 @@
 rm -rf work
 vlib work
 
-set primitive "./primitive"
+set primitive "../rtl/primitive"
+set rtl "../rtl"
 
 # Primitive simulation model
 vlog "$primitive/glbl.v"
@@ -15,24 +16,24 @@ vlog "$primitive/DSP48E1.v"
 vlog "$primitive/RAMB36E1.v"
 
 # Design RTL
-vlog "decode.v"
-vlog "alu_core.v"
-vlog "control.v"
-vlog "cpu_core.v"
-vlog "cpu_top.v"
-vlog "data_mem_infer.v"
-vlog "defines.v"
-vlog "ex1.v"
-vlog "ex2.v"
-vlog "ex3.v"
-vlog "ex4.v"
-vlog "execute.v"
-vlog "fetch.v"
-vlog "input_map.v"
-vlog "inst_mem_infer.v"
-vlog "offset_add.v"
-vlog "regfile.v"
-vlog "status_register.v"
+vlog "$rtl/decode.v"
+vlog "$rtl/alu_core.v"
+vlog "$rtl/control.v"
+vlog "$rtl/cpu_core.v"
+vlog "$rtl/cpu_top.v"
+vlog "$rtl/data_mem_infer.v"
+vlog "$rtl/defines.v"
+vlog "$rtl/ex1.v"
+vlog "$rtl/ex2.v"
+vlog "$rtl/ex3.v"
+vlog "$rtl/ex4.v"
+vlog "$rtl/execute.v"
+vlog "$rtl/fetch.v"
+vlog "$rtl/input_map.v"
+vlog "$rtl/inst_mem_infer.v"
+vlog "$rtl/offset_add.v"
+vlog "$rtl/regfile.v"
+vlog "$rtl/status_register.v"
 vlog "test_tb.v"
 
 # Call vsim to invoke simulator
