@@ -1,5 +1,5 @@
 #!/bin/bash
-# Bash script to run all toy benchmark simulations
+# Bash script to run all benchmark simulations
 # To run this script, do:
 # $ chmod +x runSimulations.sh
 # $ ./runSimulations.sh option

@@ -39,7 +39,7 @@ The simulator runs a given assembly program and outputs simulation logfiles and 
 
 Example:
 
-`python src/run-simulator.py -v benchmark/toy/median/median-O2.asm`
+`python src/run-simulator.py -v benchmark/median/median-O2.asm`
 
 Only the Assembler Input File is a required input, others are optional (default filenames are used).
 
