@@ -1,7 +1,6 @@
-`include "defines.v"
 /******************************************************************************************
-* iDEA Soft-Core Processor v1.00
-* Copyright (C) by HuiYan Cheah 2012 hycheah1@e.ntu.edu.sg
+* iDEA Soft-Core Processor v1.01
+* Copyright (C) by HuiYan Cheah 2014 hycheah1@e.ntu.edu.sg
 * School of Computer Engineering
 * Nanyang Technological University
 *
@@ -17,41 +16,41 @@
 	*
 
 ******************************************************************************************/
+`include "defines.v"
 
 module regfile (
-	input 							clk,
-	input 							regfile_we_w_i,
-	input 							regfile_we_uhw_i,
-	input 							sr_we_i, // TODO: remove sr_we_i
-	input [`reg_addr_width-1:0] 	addr_ra_i, // register a read
-	input [`reg_addr_width-1:0] 	addr_rb_i, // register b read
-	input [`reg_addr_width-1:0] 	addr_rc_i, // register c read
-	input [`reg_addr_width-1:0] 	addr_rd_i, // register d write
-	input [`datawidth-1:0]			data_rd_i, 
-	output [`datawidth-1:0]			data_ra_o, 
-	output [`datawidth-1:0]			data_rb_o, 
-	output [`datawidth-1:0]			data_rc_o 
+	input 				clk,
+	input 				regwrite_i,
+	input 				regwriteui_i,
+	input [`REG_ADDR_WIDTH-1:0] 	ra_addr_i, // register a read
+	input [`REG_ADDR_WIDTH-1:0] 	rb_addr_i, // register b read
+	input [`REG_ADDR_WIDTH-1:0] 	rc_addr_i, // register c read
+	input [`REG_ADDR_WIDTH-1:0] 	rd_addr_i, // register d write
+	input [`DATA_WIDTH-1:0]		rd_writedata_i, 
+	output [`DATA_WIDTH-1:0]	ra_readdata_o, 
+	output [`DATA_WIDTH-1:0]	rb_readdata_o, 
+	output [`DATA_WIDTH-1:0]	rc_readdata_o 
 );
-assign we_b = 	(regfile_we_uhw_i) ? 1'b0 : regfile_we_w_i; // dun write lower 16-bit if MOVT is high
-assign we_t = 	regfile_we_w_i; // upper 16-bit is always written regardless of MOVT or MOVB
+
+assign we = 	regwrite_i | regwriteui_i; 
 
 // read data
-wire [1:0] data_ra_0, data_ra_1, data_ra_2, data_ra_3, data_ra_4, data_ra_5, data_ra_6, data_ra_7;
-wire [1:0] data_ra_8, data_ra_9, data_ra_10, data_ra_11, data_ra_12, data_ra_13, data_ra_14, data_ra_15;
-wire [1:0] data_rb_0, data_rb_1, data_rb_2, data_rb_3, data_rb_4, data_rb_5, data_rb_6, data_rb_7;
-wire [1:0] data_rb_8, data_rb_9, data_rb_10, data_rb_11, data_rb_12, data_rb_13, data_rb_14, data_rb_15;
-wire [1:0] data_rc_0, data_rc_1, data_rc_2, data_rc_3, data_rc_4, data_rc_5, data_rc_6, data_rc_7;
-wire [1:0] data_rc_8, data_rc_9, data_rc_10, data_rc_11, data_rc_12, data_rc_13, data_rc_14, data_rc_15;
+wire [1:0] ra_readdata_0, ra_readdata_1, ra_readdata_2, ra_readdata_3, ra_readdata_4, ra_readdata_5, ra_readdata_6, ra_readdata_7;
+wire [1:0] ra_readdata_8, ra_readdata_9, ra_readdata_10, ra_readdata_11, ra_readdata_12, ra_readdata_13, ra_readdata_14, ra_readdata_15;
+wire [1:0] rb_readdata_0, rb_readdata_1, rb_readdata_2, rb_readdata_3, rb_readdata_4, rb_readdata_5, rb_readdata_6, rb_readdata_7;
+wire [1:0] rb_readdata_8, rb_readdata_9, rb_readdata_10, rb_readdata_11, rb_readdata_12, rb_readdata_13, rb_readdata_14, rb_readdata_15;
+wire [1:0] rc_readdata_0, rc_readdata_1, rc_readdata_2, rc_readdata_3, rc_readdata_4, rc_readdata_5, rc_readdata_6, rc_readdata_7;
+wire [1:0] rc_readdata_8, rc_readdata_9, rc_readdata_10, rc_readdata_11, rc_readdata_12, rc_readdata_13, rc_readdata_14, rc_readdata_15;
 // written data
-wire [1:0] data_rd_0, data_rd_1, data_rd_2, data_rd_3, data_rd_4, data_rd_5, data_rd_6, data_rd_7;
-wire [1:0] data_rd_8, data_rd_9, data_rd_10, data_rd_11, data_rd_12, data_rd_13, data_rd_14, data_rd_15;
+wire [1:0] rd_writedata_0, rd_writedata_1, rd_writedata_2, rd_writedata_3, rd_writedata_4, rd_writedata_5, rd_writedata_6, rd_writedata_7;
+wire [1:0] rd_writedata_8, rd_writedata_9, rd_writedata_10, rd_writedata_11, rd_writedata_12, rd_writedata_13, rd_writedata_14, rd_writedata_15;
 
-assign {data_rd_15, data_rd_14, data_rd_13, data_rd_12, data_rd_11, data_rd_10, data_rd_9, data_rd_8} = (regfile_we_uhw_i) ? data_rd_i[15:0] : data_rd_i[31:16]; // write
-assign {data_rd_7, data_rd_6, data_rd_5, data_rd_4, data_rd_3, data_rd_2, data_rd_1, data_rd_0} = data_rd_i[15:0]; // write bottom
+assign {rd_writedata_15, rd_writedata_14, rd_writedata_13, rd_writedata_12, rd_writedata_11, rd_writedata_10, rd_writedata_9, rd_writedata_8} = (regwriteui_i) ? rd_writedata_i[15:0] : rd_writedata_i[31:16]; // write
+assign {rd_writedata_7, rd_writedata_6, rd_writedata_5, rd_writedata_4, rd_writedata_3, rd_writedata_2, rd_writedata_1, rd_writedata_0} = (regwriteui_i) ? {16{1'b0}} : rd_writedata_i[15:0]; // write bottom
 
-assign data_ra_o = {data_ra_15, data_ra_14, data_ra_13, data_ra_12, data_ra_11, data_ra_10, data_ra_9, data_ra_8, data_ra_7, data_ra_6, data_ra_5, data_ra_4, data_ra_3, data_ra_2, data_ra_1, data_ra_0}; // read
-assign data_rb_o = {data_rb_15, data_rb_14, data_rb_13, data_rb_12, data_rb_11, data_rb_10, data_rb_9, data_rb_8, data_rb_7, data_rb_6, data_rb_5, data_rb_4, data_rb_3, data_rb_2, data_rb_1, data_rb_0}; // read
-assign data_rc_o = {data_rc_15, data_rc_14, data_rc_13, data_rc_12, data_rc_11, data_rc_10, data_rc_9, data_rc_8, data_rc_7, data_rc_6, data_rc_5, data_rc_4, data_rc_3, data_rc_2, data_rc_1, data_rc_0}; // read1
+assign ra_readdata_o = {ra_readdata_15, ra_readdata_14, ra_readdata_13, ra_readdata_12, ra_readdata_11, ra_readdata_10, ra_readdata_9, ra_readdata_8, ra_readdata_7, ra_readdata_6, ra_readdata_5, ra_readdata_4, ra_readdata_3, ra_readdata_2, ra_readdata_1, ra_readdata_0}; // reada
+assign rb_readdata_o = {rb_readdata_15, rb_readdata_14, rb_readdata_13, rb_readdata_12, rb_readdata_11, rb_readdata_10, rb_readdata_9, rb_readdata_8, rb_readdata_7, rb_readdata_6, rb_readdata_5, rb_readdata_4, rb_readdata_3, rb_readdata_2, rb_readdata_1, rb_readdata_0}; // readb
+assign rc_readdata_o = {rc_readdata_15, rc_readdata_14, rc_readdata_13, rc_readdata_12, rc_readdata_11, rc_readdata_10, rc_readdata_9, rc_readdata_8, rc_readdata_7, rc_readdata_6, rc_readdata_5, rc_readdata_4, rc_readdata_3, rc_readdata_2, rc_readdata_1, rc_readdata_0}; // readc
 
 RAM32M #(
 	.INIT_A(64'h0000000000000000), // Initial contents of A Port
@@ -59,20 +58,20 @@ RAM32M #(
 	.INIT_C(64'h0000000000000000), // Initial contents of C Port
 	.INIT_D(64'h0000000000000000) // Initial contents of D Port
 	) RAM32M_inst_15 (
-	.DOA(data_ra_15), // Read port A 2-bit output
-	.DOB(data_rb_15), // Read port B 2-bit output
-	.DOC(data_rc_15), // Read port C 2-bit output
+	.DOA(ra_readdata_15), // Read port A 2-bit output
+	.DOB(rb_readdata_15), // Read port B 2-bit output
+	.DOC(rc_readdata_15), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_15), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_15), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_15), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_15), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_15), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_15), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_15), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_15), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_t) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
@@ -81,20 +80,20 @@ RAM32M #(
 	.INIT_C(64'h0000000000000000), // Initial contents of C Port
 	.INIT_D(64'h0000000000000000) // Initial contents of D Port
 	) RAM32M_inst_14 (
-	.DOA(data_ra_14), // Read port A 2-bit output
-	.DOB(data_rb_14), // Read port B 2-bit output
-	.DOC(data_rc_14), // Read port C 2-bit output
+	.DOA(ra_readdata_14), // Read port A 2-bit output
+	.DOB(rb_readdata_14), // Read port B 2-bit output
+	.DOC(rc_readdata_14), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_14), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_14), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_14), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_14), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_14), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_14), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_14), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_14), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_t) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
@@ -103,20 +102,20 @@ RAM32M #(
 	.INIT_C(64'h0000000000000000), // Initial contents of C Port
 	.INIT_D(64'h0000000000000000) // Initial contents of D Port
 	) RAM32M_inst_13 (
-	.DOA(data_ra_13), // Read port A 2-bit output
-	.DOB(data_rb_13), // Read port B 2-bit output
-	.DOC(data_rc_13), // Read port C 2-bit output
+	.DOA(ra_readdata_13), // Read port A 2-bit output
+	.DOB(rb_readdata_13), // Read port B 2-bit output
+	.DOC(rc_readdata_13), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_13), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_13), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_13), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_13), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_13), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_13), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_13), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_13), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_t) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
@@ -125,20 +124,20 @@ RAM32M #(
 	.INIT_C(64'h0000000000000000), // Initial contents of C Port
 	.INIT_D(64'h0000000000000000) // Initial contents of D Port
 	) RAM32M_inst_12 (
-	.DOA(data_ra_12), // Read port A 2-bit output
-	.DOB(data_rb_12), // Read port B 2-bit output
-	.DOC(data_rc_12), // Read port C 2-bit output
+	.DOA(ra_readdata_12), // Read port A 2-bit output
+	.DOB(rb_readdata_12), // Read port B 2-bit output
+	.DOC(rc_readdata_12), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_12), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_12), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_12), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_12), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_12), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_12), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_12), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_12), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_t) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
@@ -147,20 +146,20 @@ RAM32M #(
 	.INIT_C(64'h0000000000000000), // Initial contents of C Port
 	.INIT_D(64'h0000000000000000) // Initial contents of D Port
 	) RAM32M_inst_11 (
-	.DOA(data_ra_11), // Read port A 2-bit output
-	.DOB(data_rb_11), // Read port B 2-bit output
-	.DOC(data_rc_11), // Read port C 2-bit output
+	.DOA(ra_readdata_11), // Read port A 2-bit output
+	.DOB(rb_readdata_11), // Read port B 2-bit output
+	.DOC(rc_readdata_11), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_11), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_11), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_11), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_11), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_11), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_11), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_11), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_11), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_t) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
@@ -169,64 +168,66 @@ RAM32M #(
 	.INIT_C(64'h0000000000000000), // Initial contents of C Port
 	.INIT_D(64'h0000000000000000) // Initial contents of D Port
 	) RAM32M_inst_10 (
-	.DOA(data_ra_10), // Read port A 2-bit output
-	.DOB(data_rb_10), // Read port B 2-bit output
-	.DOC(data_rc_10), // Read port C 2-bit output
+	.DOA(ra_readdata_10), // Read port A 2-bit output
+	.DOB(rb_readdata_10), // Read port B 2-bit output
+	.DOC(rc_readdata_10), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_10), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_10), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_10), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_10), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_10), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_10), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_10), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_10), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_t) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
-	.INIT_A(64'h0fea954000000000), // Initial contents of A Port
-	.INIT_B(64'h0fea954000000000), // Initial contents of B Port
-	.INIT_C(64'h0fea954000000000), // Initial contents of C Port
-	.INIT_D(64'h0fea954000000000) // Initial contents of D Port
+	.INIT_A(64'h0000000000000000), // Initial contents of A Port
+	.INIT_B(64'h0000000000000000), // Initial contents of B Port
+	.INIT_C(64'h0000000000000000), // Initial contents of C Port
+	.INIT_D(64'h0000000000000000) // Initial contents of D Port
+
 	) RAM32M_inst_9 (
-	.DOA(data_ra_9), // Read port A 2-bit output
-	.DOB(data_rb_9), // Read port B 2-bit output
-	.DOC(data_rc_9), // Read port C 2-bit output
+	.DOA(ra_readdata_9), // Read port A 2-bit output
+	.DOB(rb_readdata_9), // Read port B 2-bit output
+	.DOC(rc_readdata_9), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_9), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_9), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_9), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_9), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_9), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_9), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_9), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_9), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_t) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
-	.INIT_A(64'h0939393900000000), // Initial contents of A Port
-	.INIT_B(64'h0939393900000000), // Initial contents of B Port
-	.INIT_C(64'h0939393900000000), // Initial contents of C Port
-	.INIT_D(64'h0939393900000000) // Initial contents of D Port
+	.INIT_A(64'h0000000000000000), // Initial contents of A Port
+	.INIT_B(64'h0000000000000000), // Initial contents of B Port
+	.INIT_C(64'h0000000000000000), // Initial contents of C Port
+	.INIT_D(64'h0000000000000000) // Initial contents of D Port
+
 	) RAM32M_inst_8 (
-	.DOA(data_ra_8), // Read port A 2-bit output
-	.DOB(data_rb_8), // Read port B 2-bit output
-	.DOC(data_rc_8), // Read port C 2-bit output
+	.DOA(ra_readdata_8), // Read port A 2-bit output
+	.DOB(rb_readdata_8), // Read port B 2-bit output
+	.DOC(rc_readdata_8), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_8), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_8), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_8), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_8), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_8), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_8), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_8), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_8), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_t) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
@@ -235,20 +236,20 @@ RAM32M #(
 	.INIT_C(64'h0000000000000000), // Initial contents of C Port
 	.INIT_D(64'h0000000000000000) // Initial contents of D Port
 	) RAM32M_inst_7 (
-	.DOA(data_ra_7), // Read port A 2-bit output
-	.DOB(data_rb_7), // Read port B 2-bit output
-	.DOC(data_rc_7), // Read port C 2-bit output
+	.DOA(ra_readdata_7), // Read port A 2-bit output
+	.DOB(rb_readdata_7), // Read port B 2-bit output
+	.DOC(rc_readdata_7), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_7), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_7), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_7), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_7), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_7), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_7), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_7), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_7), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_b) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
@@ -257,20 +258,20 @@ RAM32M #(
 	.INIT_C(64'h0000000000000000), // Initial contents of C Port
 	.INIT_D(64'h0000000000000000) // Initial contents of D Port
 	) RAM32M_inst_6 (
-	.DOA(data_ra_6), // Read port A 2-bit output
-	.DOB(data_rb_6), // Read port B 2-bit output
-	.DOC(data_rc_6), // Read port C 2-bit output
+	.DOA(ra_readdata_6), // Read port A 2-bit output
+	.DOB(rb_readdata_6), // Read port B 2-bit output
+	.DOC(rc_readdata_6), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_6), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_6), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_6), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_6), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_6), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_6), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_6), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_6), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_b) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
@@ -279,20 +280,20 @@ RAM32M #(
 	.INIT_C(64'h0000000000000000), // Initial contents of C Port
 	.INIT_D(64'h0000000000000000) // Initial contents of D Port
 	) RAM32M_inst_5 (
-	.DOA(data_ra_5), // Read port A 2-bit output
-	.DOB(data_rb_5), // Read port B 2-bit output
-	.DOC(data_rc_5), // Read port C 2-bit output
+	.DOA(ra_readdata_5), // Read port A 2-bit output
+	.DOB(rb_readdata_5), // Read port B 2-bit output
+	.DOC(rc_readdata_5), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_5), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_5), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_5), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_5), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_5), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_5), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_5), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_5), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_b) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
@@ -301,20 +302,20 @@ RAM32M #(
 	.INIT_C(64'h0000000000000000), // Initial contents of C Port
 	.INIT_D(64'h0000000000000000) // Initial contents of D Port
 	) RAM32M_inst_4 (
-	.DOA(data_ra_4), // Read port A 2-bit output
-	.DOB(data_rb_4), // Read port B 2-bit output
-	.DOC(data_rc_4), // Read port C 2-bit output
+	.DOA(ra_readdata_4), // Read port A 2-bit output
+	.DOB(rb_readdata_4), // Read port B 2-bit output
+	.DOC(rc_readdata_4), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_4), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_4), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_4), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_4), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_4), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_4), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_4), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_4), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_b) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
@@ -323,86 +324,86 @@ RAM32M #(
 	.INIT_C(64'h0000000000000000), // Initial contents of C Port
 	.INIT_D(64'h0000000000000000) // Initial contents of D Port
 	) RAM32M_inst_3 (
-	.DOA(data_ra_3), // Read port A 2-bit output
-	.DOB(data_rb_3), // Read port B 2-bit output
-	.DOC(data_rc_3), // Read port C 2-bit output
+	.DOA(ra_readdata_3), // Read port A 2-bit output
+	.DOB(rb_readdata_3), // Read port B 2-bit output
+	.DOC(rc_readdata_3), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_3), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_3), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_3), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_3), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_3), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_3), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_3), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_3), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_b) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
-	.INIT_A(64'h0000000000000000), // Initial contents of A Port
-	.INIT_B(64'h0000000000000000), // Initial contents of B Port
-	.INIT_C(64'h0000000000000000), // Initial contents of C Port
-	.INIT_D(64'h0000000000000000) // Initial contents of D Port
+	.INIT_A(64'h5555555500000000), // Initial contents of A Port
+	.INIT_B(64'h5555555500000000), // Initial contents of B Port
+	.INIT_C(64'h5555555500000000), // Initial contents of C Port
+	.INIT_D(64'h5555555500000000) // Initial contents of D Port
 	) RAM32M_inst_2 (
-	.DOA(data_ra_2), // Read port A 2-bit output
-	.DOB(data_rb_2), // Read port B 2-bit output
-	.DOC(data_rc_2), // Read port C 2-bit output
+	.DOA(ra_readdata_2), // Read port A 2-bit output
+	.DOB(rb_readdata_2), // Read port B 2-bit output
+	.DOC(rc_readdata_2), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_2), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_2), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_2), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_2), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_2), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_2), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_2), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_2), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_b) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
-	.INIT_A(64'h00000000ffaa5500), // Initial contents of A Port
-	.INIT_B(64'h00000000ffaa5500), // Initial contents of B Port
-	.INIT_C(64'h00000000ffaa5500), // Initial contents of C Port
-	.INIT_D(64'h00000000ffaa5500) // Initial contents of D Port
+	.INIT_A(64'hffaa5500ffaa5500), // Initial contents of A Port
+	.INIT_B(64'hffaa5500ffaa5500), // Initial contents of B Port
+	.INIT_C(64'hffaa5500ffaa5500), // Initial contents of C Port
+	.INIT_D(64'hffaa5500ffaa5500) // Initial contents of D Port
 	) RAM32M_inst_1 (
-	.DOA(data_ra_1), // Read port A 2-bit output
-	.DOB(data_rb_1), // Read port B 2-bit output
-	.DOC(data_rc_1), // Read port C 2-bit output
+	.DOA(ra_readdata_1), // Read port A 2-bit output
+	.DOB(rb_readdata_1), // Read port B 2-bit output
+	.DOC(rc_readdata_1), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_1), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_1), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_1), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_1), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_1), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_1), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_1), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_1), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_b) // Write enable input
+	.WE(we) // Write enable input
 );
 
 RAM32M #(
-	.INIT_A(64'h00000000e4e4e4e4), // Initial contents of A Port
-	.INIT_B(64'h00000000e4e4e4e4), // Initial contents of B Port
-	.INIT_C(64'h00000000e4e4e4e4), // Initial contents of C Port
-	.INIT_D(64'h00000000e4e4e4e4) // Initial contents of D Port
+	.INIT_A(64'he4e4e4e4e4e4e4e4), // Initial contents of A Port
+	.INIT_B(64'he4e4e4e4e4e4e4e4), // Initial contents of B Port
+	.INIT_C(64'he4e4e4e4e4e4e4e4), // Initial contents of C Port
+	.INIT_D(64'he4e4e4e4e4e4e4e4) // Initial contents of D Port
 	) RAM32M_inst_0 (
-	.DOA(data_ra_0), // Read port A 2-bit output
-	.DOB(data_rb_0), // Read port B 2-bit output
-	.DOC(data_rc_0), // Read port C 2-bit output
+	.DOA(ra_readdata_0), // Read port A 2-bit output
+	.DOB(rb_readdata_0), // Read port B 2-bit output
+	.DOC(rc_readdata_0), // Read port C 2-bit output
 	.DOD(), 		 // not used -- Read/Write port D 2-bit output
-	.ADDRA(addr_ra_i), // Read port A 5-bit address input
-	.ADDRB(addr_rb_i), // Read port B 5-bit address input
-	.ADDRC(addr_rc_i), // Read port C 5-bit address input
-	.ADDRD(addr_rd_i), // Read/Write port D 5-bit address input
-	.DIA(data_rd_0), // RAM 2-bit data write input addressed by ADDRD,
-	.DIB(data_rd_0), // RAM 2-bit data write input addressed by ADDRD,
-	.DIC(data_rd_0), // RAM 2-bit data write input addressed by ADDRD,
-	.DID(data_rd_0), // RAM 2-bit data write input addressed by ADDRD,
+	.ADDRA(ra_addr_i), // Read port A 5-bit address input
+	.ADDRB(rb_addr_i), // Read port B 5-bit address input
+	.ADDRC(rc_addr_i), // Read port C 5-bit address input
+	.ADDRD(rd_addr_i), // Read/Write port D 5-bit address input
+	.DIA(rd_writedata_0), // RAM 2-bit data write input addressed by ADDRD,
+	.DIB(rd_writedata_0), // RAM 2-bit data write input addressed by ADDRD,
+	.DIC(rd_writedata_0), // RAM 2-bit data write input addressed by ADDRD,
+	.DID(rd_writedata_0), // RAM 2-bit data write input addressed by ADDRD,
 	.WCLK(clk), // Write clock input
-	.WE(we_b) // Write enable input
+	.WE(we) // Write enable input
 );
 
 endmodule

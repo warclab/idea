@@ -1,4 +1,5 @@
 `include "defines.v"
+
 /******************************************************************************************
 * iDEA Soft-Core Processor v1.00
 * Copyright (C) by HuiYan Cheah 2012 hycheah1@e.ntu.edu.sg
@@ -19,119 +20,139 @@
 module cpu_core (
 	
 	// Input 
-	input							clk,
-	input							rst,
-	// => Fetch
-	input [`datawidth-1:0] 			im_inst_i,
-	// => Execute => EX4
-	input [`datawidth-1:0] 			dm_dout_i,
-	
-	// Output
-	// Fetch => IM
-	output [`im_addr_width-1:0] 	pc_o,
-	// Execute => DM
-	output 							dm_we_o,
-	output [`dm_addr_width-1:0] 	dm_addr_o,
-	output [`datawidth-1:0] 		dm_din_o
+	input				clk,
+	input				rst,
+	// Instruction Memory
+	input [`DATA_WIDTH-1:0] 	im_inst,
+	output [`IM_ADDR_WIDTH-1:0] 	pc_o,
+	// Data Memory
+	input [`DATA_WIDTH-1:0] 	dm_readdata, // dm_dout_i,
+	output [3:0] 			dm_we,
+	output [`DM_ADDR_WIDTH-1:0] 	dm_addr,
+	output [`DATA_WIDTH-1:0] 	dm_writedata// dm_din_o
 );
 
 // Decode => Execute
-wire [6:0]						    id_ex_opmode;
-wire [4:0] 							id_ex_inmode;
-wire [3:0] 							id_ex_alumode;
-wire 								id_ex_ce2;
-wire [`portawidth-1:0] 				id_ex_data_a;
-wire [`portbwidth-1:0] 				id_ex_data_b;
-wire [`portcwidth-1:0] 				id_ex_data_c;
-wire 								id_ex_usemult;
-wire 								id_ex_regfile_we_w;
-wire								id_ex_regfile_we_uhw;
-wire [`reg_addr_width-1:0] 			id_ex_addr_rd;
-wire 								id_ex_dm_we, id_ex_dm_re;
-wire 								id_ex_ofsadden;
-wire [31:0] 						id_ex_din_dm;
-wire 								id_ex_branchen;
-wire 								id_ex_sr_we;
-wire [`im_addr_width-1:0] 			id_ex_branchtarget;
-wire [`cond_code_width-1:0] 		id_ex_condcode;
-wire [`dm_addr_width-1:0] 			id_ex_addr_base, id_ex_addr_offset;
+wire					id_ex_cmpsel;
+wire [2:0]				id_ex_loadtype;
+wire [6:0]			    	id_ex_opmode;
+wire [4:0] 				id_ex_inmode;
+wire [3:0] 				id_ex_alumode;
+wire 					id_ex_ce2;
+wire [`PORTAWIDTH-1:0] 			id_ex_data_a;
+wire [`PORTBWIDTH-1:0] 			id_ex_data_b;
+wire [`PORTCWIDTH-1:0] 			id_ex_data_c;
+wire 					id_ex_usemult;
+wire 					id_ex_regwrite;
+wire					id_ex_regwriteui;
+wire					id_ex_sr;
+wire [`REG_ADDR_WIDTH-1:0] 		id_ex_rd_addr;
+wire [3:0]				id_ex_dm_we;
+wire 					id_ex_dm_re;
+wire [`DATA_WIDTH-1:0]			id_ex_din_dm;
+wire 					id_ex_branchen;
+wire [15:0]		 		id_ex_branchtarget;
+wire [2:0]		 		id_ex_branchtype;
+wire [`DM_ADDR_WIDTH-1:0] 		id_ex_addr_base, id_ex_addr_offset;
+`ifdef EXTLOOPBACK
+wire					id_ex_extloopback;
+`endif
 
 // Execute => Decode
-wire [47:0] 						ex_ifid_p;
-wire 								ex_id_regfile_we_w, ex_id_regfile_we_uhw;
-wire [`reg_addr_width-1:0] 			ex_id_addr_rd;
-wire 								ex_id_sr_we;
+wire [36:0] 				ex_if_id_p;
+wire 					ex_id_regwrite, ex_id_regwriteui;
+wire 					ex_id_sr;
+wire [`REG_ADDR_WIDTH-1:0] 		ex_id_rd_addr;
+wire 					ex_id_cmpsel;
+wire [2:0]				ex_id_loadtype;
+wire 					ex_id_dm_re;
+wire [`DATA_WIDTH-1:0] 			ex_dm_readdata;
 
 // Execute => Fetch
-wire [`im_addr_width-1:0] 			ex_if_branchtarget;
-wire 								ex_if_branchen;
-wire [`cond_code_width-1:0] 		ex_ifid_condcode;
+wire [15:0]		 		ex_if_branchtarget;
+wire 					ex_if_branchen;
+wire [2:0]		 		ex_if_branchtype;
+
+wire 					id_if_jumpregsel;
+wire [15:0]				id_if_jumpregtarget;
+wire [`IM_ADDR_WIDTH-1:0] 		pc;
 
 // ******* Fetch ******
 fetch i_fetch (
-	
 	// Input
-    .clk							(clk), 
-    .rst							(rst), 
-    .branchen_i						(ex_if_branchen), 
-    .condcode_i						(ex_ifid_condcode),
-    .branchtarget_i					(ex_if_branchtarget),
-    .p_i							(ex_ifid_p),
-	.inst_i							(im_inst_i),
+	.clk			(clk), 
+	.rst			(rst), 
+	.branchen_i		(ex_if_branchen), 
+	.branchtype_i		(ex_if_branchtype),
+	.branchtarget_i		(ex_if_branchtarget),
+	.p_i			(ex_if_id_p[31:0]),
+	.sign_bit_i		(ex_if_id_p[36]), // 47
+	.inst_i			(im_inst),
+	.jumpregsel_i		(id_if_jumpregsel),
+	.jumpregtarget_i	(id_if_jumpregtarget),
 	// Output
-	.pc_o 							(pc_o)
+	.pc_o 			(pc_o)
+);
 
+if_o_shreg i_if_o_shreg (
+	.clk			(clk),
+	.rst			(rst),
+	.pc_i 			(pc_o),
+	.pc_o 			(pc)
 );
 
 // ******* Decode ******
 decode i_decode (
 
 	// Input
-    .clk 							(clk), 
-    .rst 							(rst), 
-    .inst_i 						(im_inst_i), 
-    .regfile_we_w_i 				(ex_id_regfile_we_w), 
-    .regfile_we_uhw_i 				(ex_id_regfile_we_uhw), 
-    .addr_rd_i 						(ex_id_addr_rd), 
-    .sr_we_i 						(ex_id_sr_we), 
-    .condcode_i 					(ex_ifid_condcode), 
-    .p_i 							(ex_ifid_p), 
+	.clk 			(clk), 
+	.rst 			(rst), 
+	.pc_i			(pc),
+	.inst_i 		(im_inst), 
+	.regwrite_i 		(ex_id_regwrite), 
+	.regwriteui_i 		(ex_id_regwriteui), 
+	.sr_i			(ex_id_sr),
+	.rd_addr_i 		(ex_id_rd_addr), 
+	.cmpsel_i		(ex_id_cmpsel),
+	.loadtype_i		(ex_id_loadtype),
+	.dm_re_i		(ex_id_dm_re),
+	.dm_readdata_i		(ex_dm_readdata),
+	.p_i 			(ex_if_id_p[35:0]), 
 
 	// Output
-    // => Execute => Register file
-	.addr_rd_o 						(id_ex_addr_rd), 
-    .regfile_we_w_o 				(id_ex_regfile_we_w), 
-    .regfile_we_uhw_o 				(id_ex_regfile_we_uhw), 
-	
+	// => Execute => Register file
+	.rd_addr_o 		(id_ex_rd_addr), 
+	.regwrite_o 		(id_ex_regwrite), 
+	.regwriteui_o 		(id_ex_regwriteui), 
+	.sr_o			(id_ex_sr),
+	    
 	// => Data Memory
-    .dm_we_o 						(id_ex_dm_we), 
-    .dm_re_o 						(id_ex_dm_re), 
-	
-	// => Offset Adder
-    .ofsadden_o 					(id_ex_ofsadden), 
-	.din_dm_o 						(id_ex_din_dm),
-	.base_addr_o 					(id_ex_addr_base),
-	.offset_addr_o 					(id_ex_addr_offset),
-	
+	.dm_we_o 		(dm_we), 
+	.dm_re_o 		(id_ex_dm_re), 
+	.dm_addr_o		(dm_addr),
+	.dm_writedata_o		(dm_writedata),
+	    
 	// => Execute => Branch
-    .branchen_o 					(id_ex_branchen), 
-    .condcode_o 					(id_ex_condcode), 
-    .branchtarget_o 				(id_ex_branchtarget), 
-	
-
-	// => Execute => Status Register
-    .sr_we_o 						(id_ex_sr_we), 
-
+	.branchen_o 		(id_ex_branchen), 
+	.branchtarget_o 	(id_ex_branchtarget), 
+	.branchtype_o 		(id_ex_branchtype), 
+	    
 	// => ALU
-    .inmode_o 						(id_ex_inmode), 
-    .alumode_o 						(id_ex_alumode), 
-    .opmode_o 						(id_ex_opmode), 
-    .ce2_o 							(id_ex_ce2), 
-	.usemult_o 						(id_ex_usemult),
-    .data_a_o 						(id_ex_data_a), 
-    .data_b_o 						(id_ex_data_b), 
-    .data_c_o 						(id_ex_data_c)
-
+`ifdef EXTLOOPBACK
+	.extloopback_o		(id_ex_extloopback),
+`endif
+	.cmpsel_o		(id_ex_cmpsel),
+	.loadtype_o		(id_ex_loadtype),
+	.inmode_o 		(id_ex_inmode), 
+	.alumode_o 		(id_ex_alumode), 
+	.opmode_o 		(id_ex_opmode), 
+	.ce2_o 			(id_ex_ce2), 
+	.usemult_o 		(id_ex_usemult),
+	.data_a_o 		(id_ex_data_a), 
+	.data_b_o 		(id_ex_data_b), 
+	.data_c_o 		(id_ex_data_c),
+	.jumpregsel_o		(id_if_jumpregsel),
+	.jumpregtarget_o	(id_if_jumpregtarget)
 );
 
 
@@ -140,46 +161,47 @@ decode i_decode (
 execute i_execute (
 
 	// Input
-    .clk 							(clk), 
-    .rst 							(rst), 
-    .regfile_we_w_i 				(id_ex_regfile_we_w), 
-    .regfile_we_uhw_i 				(id_ex_regfile_we_uhw), 
-    .dm_we_i 						(id_ex_dm_we), 
-    .dm_re_i 						(id_ex_dm_re), 
-    .ofsadden_i 					(id_ex_ofsadden), 
-    .addr_base_i 					(id_ex_addr_base), 
-    .addr_offset_i 					(id_ex_addr_offset), 
-    .din_dm_i 						(id_ex_din_dm), // from regfile data_rc 
-    .branchen_i 					(id_ex_branchen), 
-    .condcode_i 					(id_ex_condcode), 
-    .branchtrgt_i 					(id_ex_branchtarget), 
-    .sr_we_i 						(id_ex_sr_we), 
+	.clk 			(clk), 
+	.rst 			(rst), 
+	.regwrite_i 		(id_ex_regwrite), 
+	.regwriteui_i 		(id_ex_regwriteui), 
+	.sr_i			(id_ex_sr),
+	.dm_re_i 		(id_ex_dm_re), 
+	.branchen_i 		(id_ex_branchen), 
+	.branchtarget_i		(id_ex_branchtarget), 
+	.branchtype_i		(id_ex_branchtype), 
 	// => Execute => EX4
-	.dm_regfile_data_i 				(dm_dout_i),
-    .alumode_i 						(id_ex_alumode), 
-    .inmode_i 						(id_ex_inmode), 
-    .opmode_i 						(id_ex_opmode), 
-    .ce2_i 							(id_ex_ce2), 
-    .usemult_i 						(id_ex_usemult), 
-    .data_a_i 						(id_ex_data_a), 
-    .data_b_i 						(id_ex_data_b), 
-    .data_c_i 						(id_ex_data_c), 
-    .addr_rd_i 						(id_ex_addr_rd), 
+`ifdef EXTLOOPBACK
+	.extloopback_i		(id_ex_extloopback),
+`endif
+	.dm_regfile_data_i 	(dm_readdata), 
+	.cmpsel_i		(id_ex_cmpsel),
+	.loadtype_i		(id_ex_loadtype),
+	.alumode_i 		(id_ex_alumode), 
+	.inmode_i 		(id_ex_inmode), 
+	.opmode_i 		(id_ex_opmode), 
+	.ce2_i 			(id_ex_ce2), 
+	.usemult_i 		(id_ex_usemult), 
+	.data_a_i 		(id_ex_data_a), 
+	.data_b_i 		(id_ex_data_b), 
+	.data_c_i 		(id_ex_data_c), 
+	.rd_addr_i 		(id_ex_rd_addr), 
 
 	// Output
-    .p_o 							(ex_ifid_p), 
-    .regfile_we_w_o 				(ex_id_regfile_we_w), 
-    .regfile_we_uhw_o 				(ex_id_regfile_we_uhw), 
-    .regfile_addr_o 				(ex_id_addr_rd), 
+	.p_o 			(ex_if_id_p), 
+	.regwrite_o 		(ex_id_regwrite), 
+	.regwriteui_o 		(ex_id_regwriteui), 
+	.sr_o			(ex_id_sr),
+	.regfile_addr_o 	(ex_id_rd_addr), 
 
 	// => DM
-	.dm_we_o 						(dm_we_o),
-	.ofs_dm_addr_o 					(dm_addr_o),
-	.ofs_dm_data_o 					(dm_din_o),
-    .branchen_o 					(ex_if_branchen), 
-    .condcode_o 					(ex_ifid_condcode), 
-    .branchtrgt_o 					(ex_if_branchtarget), 
-    .sr_we_o 						(ex_id_sr_we)
+	.branchen_o 		(ex_if_branchen), 
+	.branchtarget_o		(ex_if_branchtarget), 
+	.branchtype_o		(ex_if_branchtype), 
+	.cmpsel_o		(ex_id_cmpsel),
+	.loadtype_o		(ex_id_loadtype),
+	.dm_re_o		(ex_id_dm_re),
+	.dm_regfile_data_o	(ex_dm_readdata)
 
 );
 

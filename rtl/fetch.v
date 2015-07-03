@@ -16,74 +16,83 @@
 ******************************************************************************************/
 `include "defines.v"
 
+`define J 6'b000010
+`define JAL 6'b000011
+
+`define EQ 3'b100 
+`define NE 3'b101
+`define GE 3'b010
+`define LT 3'b001
+`define GT 3'b111
+`define LE 3'b110
+
 module fetch(
 	
 	// Input
-	input 							clk,
-	input 							rst,
+	input 				clk,
+	input 				rst,
 	// For Branch	
-	input 							branchen_i,
-	input [`cond_code_width-1:0] 	condcode_i,
-	input [`im_addr_width-1:0] 		branchtarget_i,
-	input [47:0] 					p_i,
-	input [`datawidth-1:0] 			inst_i,
+	input [2:0]			branchtype_i,
+	input 				branchen_i,
+	input [15:0]			branchtarget_i, // Max is 16 bits
+	input 				jumpregsel_i,
+	input [15:0]			jumpregtarget_i,
+	input [`DATA_WIDTH-1:0]		p_i, // 
+	input [`DATA_WIDTH-1:0] 	inst_i, // where is this from? -- data mem
+	input 				sign_bit_i,
 	
 	// Output
 	// => Instruction Memory
-	output [`im_addr_width-1:0] 	pc_o
+	output [`IM_ADDR_WIDTH-1:0] 	pc_o
 	);
 
 // Internal Wires
-reg [`im_addr_width-1:0] 			pc;
-reg									absbranchsel;
-wire [`im_addr_width-1:0] 			absbranchpc; 
-reg 								branchsel;
-wire [`opcode_width-1:0] 			opcode;
-wire 								bitwise_or_p, sign_bit_p;
+reg [`IM_ADDR_WIDTH-1:0] 		pc;
+reg					jumpsel;
+wire [25:0]		 		jumptarget; 
+reg 					branchsel;
+wire [5:0]		 		opcode;
+wire 					zero;
 
 // Absolute Branch Detect
-assign opcode = inst_i[25:21];
-assign absbranchpc = inst_i[`im_addr_width-1:0];
+assign opcode = inst_i[31:26];
+assign jumptarget = inst_i[25:0];
 
 always@ (opcode)
 begin
-	if (opcode == `B)
-		absbranchsel = 1'b1;
-   else
-		absbranchsel = 1'b0; 
+	if (opcode == `J || opcode == `JAL)
+		jumpsel = 1'b1; // PCSrc
+   	else
+		jumpsel = 1'b0; 
 end
 
-// Conditional Branch
-assign bitwise_or_p = (|p_i);
-assign sign_bit_p = (p_i[47]);
+// Conditional Branch 
+assign zero = ~(|p_i[31:0]);
 
-always@ (bitwise_or_p or sign_bit_p or condcode_i or branchen_i)
+always@ (*)
 begin
-	if (branchen_i)
-	begin
-		case (condcode_i[`cond_code_width-1:0])
-			`EQ: branchsel = ~bitwise_or_p;	// ~(0)
-			`NE: branchsel = bitwise_or_p; 	// 1
-			`GE: branchsel = ~sign_bit_p | ~bitwise_or_p; 
-			`LT: branchsel = sign_bit_p;  
-			`GT: branchsel = ~sign_bit_p; 
-			`LE: branchsel = sign_bit_p | ~bitwise_or_p;	 
-			`AL: branchsel = 1'b1;
-			default: branchsel = 1'b0;
-		endcase
-	end
-	else branchsel = 1'b0;
+	case (branchtype_i)
+		`EQ/*100*/: branchsel = zero & branchen_i;
+		`GE/*010*/: branchsel = /*Greater than*/ (~sign_bit_i & ~zero) | /*Equal*/ (zero) & branchen_i;
+		`GT/*111*/: branchsel = ~sign_bit_i & ~zero & branchen_i;
+		`LE/*110*/: branchsel = /*Less than*/ sign_bit_i | /*Equal*/ (zero) & branchen_i;
+		`LT/*001*/: branchsel = sign_bit_i & branchen_i;
+		`NE/*3'b101*/: branchsel = ~zero & branchen_i;
+		default: branchsel = 1'b0;
+	endcase
 end
 
 // Program Counter
-always@ (posedge clk)
+always@ (posedge clk) // This is meant to be priority
 begin
 	if (rst)
-		pc <= 9'h000;
-	else if (branchsel)
+		pc <= {(`IM_ADDR_WIDTH){1'b0}};
+	else if (branchsel) // PCSrc
 		pc <= branchtarget_i;
-	else if (absbranchsel)
-		pc <= absbranchpc;
+	else if (jumpsel) // PCSrc
+		pc <= jumptarget; // PCJumpAddrImm
+	else if (jumpregsel_i)
+		pc <= jumpregtarget_i;
 	else
 		pc <= pc + 1'b1;
 end
