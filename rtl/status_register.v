@@ -1,7 +1,20 @@
 `timescale 1ns / 1ps
 /******************************************************************************************
-* iDEA Soft-Core Processor v1.00
-* Copyright (C) by HuiYan Cheah 2012 hycheah1@e.ntu.edu.sg
+Copyright (c) 2016 HuiYan Cheah.
+All rights reserved.
+
+Redistribution and use in source and binary forms are permitted provided that
+the above copyright notice and this paragraph are duplicated in all such forms
+and that any documentation, advertising materials, and other materials related
+to such distribution and use acknowledge that the software was developed by
+Nanyang Technological University. The name of Nanyang Technological University
+may not be used to endorse or promote products derived from this software
+without specific prior written permission.  THIS SOFTWARE IS PROVIDED ``AS IS''
+AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION,
+THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+* iDEA Soft-Core Processor
+* HuiYan Cheah, 2016 hycheah1@e.ntu.edu.sg
 * School of Computer Engineering
 * Nanyang Technological University
 *
